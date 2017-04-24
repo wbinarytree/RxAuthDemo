@@ -1,15 +1,15 @@
-package io.phoenix.demo.rxauthdemo.event;
+package io.phoenix.demo.rxauthdemo.action;
 
 /**
- * Created by awang on 2017/4/23.
+ * Created by yaoda on 24/04/17.
  */
 
-public class AuthEvent {
-    public final static class SignUpEvent extends AuthEvent {
+public class AuthAction {
+    public final static class SignUpAction extends AuthAction {
         private final String username;
         private final String password;
 
-        public SignUpEvent(String username, String password) {
+        public SignUpAction(String username, String password) {
             this.username = username;
             this.password = password;
         }
@@ -22,5 +22,4 @@ public class AuthEvent {
             return password;
         }
     }
-
 }
