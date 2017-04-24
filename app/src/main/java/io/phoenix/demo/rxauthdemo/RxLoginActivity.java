@@ -70,6 +70,8 @@ public class RxLoginActivity extends AppCompatActivity {
         Observable<SignUpEvent> click = RxView.clicks(mEmailSignInButton)
                 .map(ignore -> new SignUpEvent(mEmailView.getText()
                         .toString(), mPasswordView.getText().toString()));
+
+
         disposables.add(click.compose(translator.signUp)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(authUiModel -> {

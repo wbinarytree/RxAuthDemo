@@ -19,7 +19,7 @@ public class AuthManager {
     private static final String TAG = "AuthManager";
     private SignUpResult result;
     private Observable<SignUpResult> observable = Observable.fromCallable(() -> result)
-            .delay(5000, TimeUnit.MILLISECONDS);
+            .delay(2000, TimeUnit.MILLISECONDS);
 
     public Observable<AuthResult.SignUpResult> signUp(SignUpAction action) {
         //检查用户名是否合法
