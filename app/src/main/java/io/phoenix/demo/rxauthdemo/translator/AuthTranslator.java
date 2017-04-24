@@ -6,8 +6,10 @@ import io.phoenix.demo.rxauthdemo.AuthUiModel;
 import io.phoenix.demo.rxauthdemo.action.AuthAction.SignUpAction;
 import io.phoenix.demo.rxauthdemo.event.AuthEvent.SignUpEvent;
 import io.phoenix.demo.rxauthdemo.result.AuthResult.SignUpResult;
+import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 
 
 /**
@@ -16,31 +18,38 @@ import io.reactivex.schedulers.Schedulers;
 
 public class AuthTranslator {
     private AuthManager authManager;
+    private Subject<SignUpEvent> middle = BehaviorSubject.create();
+    private Observable<AuthUiModel> authUiModelObservable
+            = middle.map(event -> new SignUpAction(event.getUsername(), event.getPassword()))
+            //使用FlatMap转向，进行注册
+            .flatMap(action -> authManager.signUp(action)
+                    //扫描结果
+                    .map(signUpResult -> {
+                        if (signUpResult == SignUpResult.FAIL_USERNAME) {
+                            return AuthUiModel.fail(false, true, "Username error");
+                        }
+                        if (signUpResult == SignUpResult.FAIL_PASSWORD) {
+                            return AuthUiModel.fail(true, false, "Password error");
+                        }
+                        if (signUpResult == SignUpResult.SUCCESS) {
+                            return AuthUiModel.success();
+                        }
+                        //TODO Handle error
+                        throw new IllegalArgumentException("Unknown Result");
+                    }).replay(1).autoConnect()
+                    //设置初始状态为loading。
+                    .startWith(AuthUiModel.inProcess())
+                    //设置错误状态为error，防止触发onError() 造成断流
+                    .onErrorReturn(error -> AuthUiModel.fail(true, true, error.getMessage())));
+    ;
     public final ObservableTransformer<SignUpEvent, AuthUiModel> signUp
-            = observable -> observable.map(event -> new SignUpAction(event.getUsername(), event.getPassword()))
-                                      .flatMap(action -> authManager.signUp(action)
-                                                                    .subscribeOn(Schedulers.io())
-                                                                    .map(signUpResult -> {
-                                                                        if (signUpResult == SignUpResult.FAIL_USERNAME) {
-                                                                            return AuthUiModel.fail(false, true, "Username error");
-                                                                        }
-                                                                        if (signUpResult == SignUpResult.FAIL_PASSWORD) {
-                                                                            return AuthUiModel.fail(true, false, "Password error");
-                                                                        }
-                                                                        if (signUpResult == SignUpResult.SUCCESS) {
-                                                                            return AuthUiModel.success();
-                                                                        }
-                                                                        //TODO Handle error
-                                                                        throw new IllegalArgumentException("Unknown Result");
-                                                                    })
-                                                                    .startWith(AuthUiModel.inProcess())
-                                                                    .onErrorReturn(error -> AuthUiModel
-                                                                            .fail(true, true, error.getMessage())));
-
+            //上游是UiEvent，封装成对应的Action
+            = observable -> {
+        observable.subscribe(middle);
+        return authUiModelObservable;
+    };
 
     public AuthTranslator(AuthManager authManager) {
         this.authManager = authManager;
     }
-
-
 }

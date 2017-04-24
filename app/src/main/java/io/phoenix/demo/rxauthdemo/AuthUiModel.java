@@ -9,7 +9,6 @@ public class AuthUiModel {
     private final boolean usrValidate;
     private final boolean pwdValidate;
     private final boolean success;
-
     private final String errorMessage;
 
     private AuthUiModel(boolean inProcess, boolean usrValidate, boolean pwdValidate, boolean success, String errorMessage) {
@@ -18,8 +17,6 @@ public class AuthUiModel {
         this.pwdValidate = pwdValidate;
         this.success = success;
         this.errorMessage = errorMessage;
-
-
     }
 
     public static AuthUiModel idle() {
