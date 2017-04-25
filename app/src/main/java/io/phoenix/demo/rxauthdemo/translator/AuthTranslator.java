@@ -19,8 +19,8 @@ import io.reactivex.subjects.Subject;
 public class AuthTranslator {
     private AuthManager authManager;
     private Subject<SignUpEvent> middle = PublishSubject.create();
-    private Observable<AuthUiModel> authUiModelObservable = middle
-            .map(event -> new SignUpAction(event.getUsername(), event.getPassword()))
+    private Observable<AuthUiModel> authUiModelObservable
+            = middle.map(event -> new SignUpAction(event.getUsername(), event.getPassword()))
             //使用FlatMap转向，进行注册
             .flatMap(action -> authManager.signUp(action)
                     //扫描结果
@@ -47,9 +47,11 @@ public class AuthTranslator {
     public final ObservableTransformer<SignUpEvent, AuthUiModel> signUp
             //上游是UiEvent，封装成对应的Action
             = observable -> {
+        //中间人切换监听
         observable.subscribe(middle);
         return authUiModelObservable;
     };
+
 
     public AuthTranslator(AuthManager authManager) {
         this.authManager = authManager;
